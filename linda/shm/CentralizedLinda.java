@@ -5,7 +5,6 @@ import linda.Linda;
 import linda.Tuple;
 
 import java.util.*;
-import java.util.concurrent.Semaphore;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -36,21 +35,23 @@ public class CentralizedLinda implements Linda {
     public void write(Tuple t) {
         this.mutex.lock();
 
-        ArrayList<Tuple> found;
-
         // Read Callbacks
-        for (EventHandler event : this.readEvents) {
+        Iterator<EventHandler> iterReadEvents = this.readEvents.iterator();
+        while (iterReadEvents.hasNext()) {
+            EventHandler event = iterReadEvents.next();
             if (event.worksWith(t)) {
                 event.callWith(t.deepclone());
-                this.readEvents.remove(event);
+                iterReadEvents.remove();
             }
         }
 
         // Take Callbacks
-        for (EventHandler event : takeEvents) {
+        Iterator<EventHandler> iterTakeEvents = this.takeEvents.iterator();
+        while (iterTakeEvents.hasNext()) {
+            EventHandler event = iterTakeEvents.next();
             if (event.worksWith(t)) {
                 event.callWith(t);
-                this.takeEvents.remove(event);
+                iterTakeEvents.remove();
                 this.mutex.unlock();
                 return;
             }
@@ -231,7 +232,7 @@ public class CentralizedLinda implements Linda {
         }
 
         public boolean worksWith(Tuple tuple) {
-            return this.template.contains(tuple);
+            return tuple.matches(this.template);
         }
 
         public void callWith(Tuple tuple) {
