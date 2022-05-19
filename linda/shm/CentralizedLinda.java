@@ -45,6 +45,8 @@ public class CentralizedLinda implements Linda {
             }
         }
 
+        this.readCondition.signalAll();
+
         // Take Callbacks
         Iterator<EventHandler> iterTakeEvents = this.takeEvents.iterator();
         while (iterTakeEvents.hasNext()) {
@@ -59,7 +61,6 @@ public class CentralizedLinda implements Linda {
 
         this.tuplesList.add(t);
 
-        this.readCondition.signalAll();
         this.takeCondition.signalAll();
 
         this.mutex.unlock();
@@ -71,7 +72,9 @@ public class CentralizedLinda implements Linda {
 
         while (!existTuple(template)) {
             try {
+                this.mutex.unlock();
                 this.takeCondition.await();
+                this.mutex.lock();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -90,7 +93,9 @@ public class CentralizedLinda implements Linda {
 
         while (!this.existTuple(template)) {
             try {
+                this.mutex.unlock();
                 this.readCondition.await();
+                this.mutex.lock();
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
