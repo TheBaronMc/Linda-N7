@@ -2,7 +2,7 @@ package linda.test;
 
 import linda.*;
 
-public class BasicTestTake {
+public class BasicTestTryTake2 {
 
     public static void main(String[] a) {
 
@@ -12,25 +12,11 @@ public class BasicTestTake {
         new Thread() {
             public void run() {
                 try {
-                    Thread.sleep(2);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                Tuple motif = new Tuple(Integer.class, String.class);
-                Tuple res = linda.take(motif);
-                System.out.println("(1) Resultat take:" + res);
-                linda.debug("(1)");
-            }
-        }.start();
-
-        new Thread() {
-            public void run() {
-                try {
                     Thread.sleep(50);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                Tuple motif = new Tuple(Integer.class, String.class);
+                Tuple motif = new Tuple(String.class, Integer.class);
                 Tuple res = linda.tryTake(motif);
                 System.out.println("(3) Resultat tryTake:" + res);
                 linda.debug("(3)");
@@ -40,7 +26,35 @@ public class BasicTestTake {
         new Thread() {
             public void run() {
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(1500);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Tuple motif = new Tuple(String.class, Integer.class);
+                Tuple res = linda.tryTake(motif);
+                System.out.println("(4) Resultat tryTake:" + res);
+                linda.debug("(4)");
+            }
+        }.start();
+
+        new Thread() {
+            public void run() {
+                try {
+                    Thread.sleep(1700);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                Tuple motif = new Tuple(String.class, Integer.class);
+                Tuple res = linda.tryTake(motif);
+                System.out.println("(5) Resultat tryTake:" + res);
+                linda.debug("(5)");
+            }
+        }.start();
+
+        new Thread() {
+            public void run() {
+                try {
+                    Thread.sleep(1200);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

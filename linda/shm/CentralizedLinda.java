@@ -2,9 +2,11 @@ package linda.shm;
 
 import linda.*;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 /** Shared memory implementation of Linda. */
@@ -31,17 +33,17 @@ public class CentralizedLinda implements Linda {
     public void write(Tuple t) {
         // on débloque tous les read en attente en priorité
         for(CallbackHandler readCallback : this.readCallbacks){
-            if(readCallback.doesMatch(t)){
+            if(readCallback.doesMatch(t.deepclone())){
                 this.readCallbacks.remove(readCallback);
-                readCallback.call(t);
+                readCallback.call(t.deepclone());
             }
         }
 
         // on débloque un unique take en attente si possible
         for (CallbackHandler takeCallback : this.takeCallbacks ){
-            if(takeCallback.doesMatch(t)){
+            if(takeCallback.doesMatch(t.deepclone())){
                 this.takeCallbacks.remove(takeCallback);
-                takeCallback.call(t);
+                takeCallback.call(t.deepclone());
                 // le tuple n'est pas écrit s'il débloque un take en attente.
                 return;
             }
@@ -58,7 +60,7 @@ public class CentralizedLinda implements Linda {
         // On met le take en attente le temps que le callback soit appelé
         cb.sleep();
         // On renvoie le tuple une fois que le take est débloqué
-        return cb.getTuple();
+        return cb.getTuple().deepclone();
     }
 
     @Override
@@ -69,7 +71,7 @@ public class CentralizedLinda implements Linda {
         // On met le read en attente le temps que le callback soit appelé
         cb.sleep();
         // On renvoie le tuple une fois que le read est débloqué
-        return cb.getTuple();
+        return cb.getTuple().deepclone();
     }
 
     @Override
@@ -79,7 +81,7 @@ public class CentralizedLinda implements Linda {
             // on retourne le premier qui convient au template et on le supprime de la liste
             if(tuple.matches(template)){
                 this.tuples.remove(tuple);
-                return tuple;
+                return tuple.deepclone();
             }
         }
         // On retourne null si aucun tuple ne convient au template
@@ -92,7 +94,7 @@ public class CentralizedLinda implements Linda {
         for(Tuple tuple : this.tuples){
             // on retourne le premier qui convient au template
             if(tuple.matches(template)){
-                return tuple;
+                return tuple.deepclone();
             }
         }
         // On retourne null si aucun tuple ne convient au template
@@ -101,27 +103,34 @@ public class CentralizedLinda implements Linda {
 
     @Override
     public Collection<Tuple> takeAll(Tuple template) {
-        List<Tuple> matched = new ArrayList<>();
-        //On parcourt la liste des tuples
-        for(Tuple tuple : this.tuples){
-            // On ajoute le tuple à la liste s'il convient au template
-            if(tuple.matches(template)){
-                // Le tuple matché est supprimé de la collection de tuples
-                this.tuples.remove(tuple);
-                matched.add(tuple);
+        Collection<Tuple> matched = new ArrayList<>();
+        List<Tuple> toRemove = new ArrayList<>();
+        // On utilise un itérateur pour boucler sur la liste
+        // pour pas que celle ci puisse être modifiée pendant l'opération
+        ListIterator<Tuple> it = (ListIterator<Tuple>) this.tuples.iterator();
+        Tuple tuple;
+        while (it.hasNext()) {
+            if ((tuple = it.next()).matches(template)) {
+                matched.add(tuple.deepclone());
+                // on construit la liste des éléments à supprimer
+                toRemove.add(tuple);
             }
         }
+        // on supprime tous les éléments en une seule opération (pour ne pas utiliser trop de mémoire)
+        this.tuples.removeAll(toRemove);
         return matched;
     }
 
     @Override
     public Collection<Tuple> readAll(Tuple template) {
-        List<Tuple> matched = new ArrayList<>();
-        //On parcourt la liste des tuples
-        for(Tuple tuple : this.tuples){
-            // On ajoute le tuple à la liste s'il convient au template
-            if(tuple.matches(template)){
-                matched.add(tuple);
+        Collection<Tuple> matched = new ArrayList<>();
+        // On utilise un itérateur pour boucler sur la liste
+        // pour pas que celle ci puisse être modifiée pendant l'opération
+        ListIterator<Tuple> it = (ListIterator<Tuple>) this.tuples.iterator();
+        Tuple tuple;
+        while (it.hasNext()) {
+            if ((tuple = it.next()).matches(template)) {
+                matched.add(tuple.deepclone());
             }
         }
         return matched;
@@ -151,12 +160,36 @@ public class CentralizedLinda implements Linda {
             }
         }
     }
+    public void save(String filePath) {
+        try {
+            FileOutputStream fileWriter = new FileOutputStream(filePath);
+            ObjectOutputStream objectWriter = new ObjectOutputStream(fileWriter);
+            objectWriter.writeObject(this.tuples);
+            objectWriter.close();
+            fileWriter.close();
+        } catch (IOException e) {
+            System.err.println("Fatal IO error with " + filePath);
+        }
+    }
+
+    /**
+     * Lire l'espace de tuples à partir d'un fichier (désérialisation)
+     * @param filePath chemin d'accès du fichier
+     */
+    public void load(String filePath) {
+        try {
+            FileInputStream fileReader = new FileInputStream(filePath);
+            ObjectInputStream objectReader = new ObjectInputStream(fileReader);
+            this.tuples = (CopyOnWriteArrayList<Tuple>) objectReader.readObject();
+            objectReader.close();
+            fileReader.close();
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Fatal IO error with " + filePath);
+        }
+    }
 
     @Override
     public void debug(String prefix) {
 
     }
-
-    // TO BE COMPLETED
-
 }
