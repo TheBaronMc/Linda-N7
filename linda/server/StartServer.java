@@ -11,6 +11,18 @@ public class StartServer {
 
     public static void main(String args[]) throws Exception {
         Thread server = new Thread() {
+
+            public static void setTimeout(Runnable runnable, int delay){
+                new Thread(() -> {
+                    try {
+                        Thread.sleep(delay);
+                        runnable.run();
+                    }
+                    catch (Exception e){
+                        System.err.println(e);
+                    }
+                }).start();
+            }
           @Override
           public void run() {
               LindaServer lindaServer = null;
@@ -21,6 +33,19 @@ public class StartServer {
                   Registry dns = LocateRegistry.createRegistry(4000);
 
                   dns.bind("LindaServer", lindaServer);
+
+                  LindaServer finalLindaServer = lindaServer;
+                  setTimeout(new Runnable() {
+                      @Override
+                      public void run() {
+                          try {
+                              finalLindaServer.save();
+                              System.out.println("Tuple saved !");
+                          } catch (RemoteException e) {
+                              throw new RuntimeException(e);
+                          }
+                      }
+                  }, 15000);
                   System.out.println("### LindaServer : Binded");
               } catch (RemoteException e) {
                   throw new RuntimeException(e);

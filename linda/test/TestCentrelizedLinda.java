@@ -5,6 +5,7 @@ import linda.shm.CentralizedLinda;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -131,5 +132,26 @@ public class TestCentrelizedLinda {
 
         tuples = linda.takeAll(motif);
         assertNotEquals(0, tuples.size());
+    }
+
+    @Test
+    void TestSave() {
+        Tuple t1 = new Tuple(1, 2);
+        Tuple t2 = new Tuple(3, 4);
+        Tuple t3 = new Tuple(5, 6);
+
+        linda.write(t1);
+        linda.write(t2);
+        linda.write(t3);
+
+        linda.save();
+
+        CentralizedLinda l = new CentralizedLinda();
+
+        Collection<Tuple> tuples = linda.takeAll(new Tuple(Integer.class, Integer.class));
+        assertEquals(3, tuples.size());
+
+        File f = new File(CentralizedLinda.SAVE_FILE_PATH);
+        f.delete();
     }
 }

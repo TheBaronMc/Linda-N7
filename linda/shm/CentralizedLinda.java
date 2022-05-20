@@ -4,6 +4,7 @@ import linda.Callback;
 import linda.Linda;
 import linda.Tuple;
 
+import java.io.*;
 import java.util.*;
 
 import java.util.concurrent.locks.Lock;
@@ -12,6 +13,8 @@ import java.util.concurrent.locks.Condition;
 
 /** Shared memory implementation of Linda. */
 public class CentralizedLinda implements Linda {
+
+    public static final String SAVE_FILE_PATH = "linda_save";
 
     private ArrayList<Tuple> tuplesList;
     private ArrayList<EventHandler> readEvents;
@@ -29,6 +32,8 @@ public class CentralizedLinda implements Linda {
         this.mutex = new ReentrantLock();
         this.readCondition = this.mutex.newCondition();
         this.takeCondition = this.mutex.newCondition();
+
+        this.load();
     }
 
     @Override
@@ -220,6 +225,31 @@ public class CentralizedLinda implements Linda {
         }
     }
 
+    public void save() {
+        File saveFile = new File(SAVE_FILE_PATH);
+
+        if (!saveFile.exists()) {
+            try {
+                saveFile.createNewFile();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        try {
+            OutputStream os = new FileOutputStream(saveFile);
+            ObjectOutputStream oos = new ObjectOutputStream(os);
+
+            oos.writeObject(this.tuplesList);
+
+            os.close();
+            oos.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
     @Override
     public void debug(String prefix) {
         System.out.println(prefix);
@@ -258,6 +288,29 @@ public class CentralizedLinda implements Linda {
             }
         }
         return null;
+    }
+
+    private void load() {
+        File saveFile = new File(SAVE_FILE_PATH);
+
+        if (!saveFile.exists())
+            return;
+
+        try {
+            InputStream is = new FileInputStream(saveFile);
+            ObjectInputStream ois = new ObjectInputStream(is);
+
+            ArrayList<Tuple> tuples = (ArrayList<Tuple>) ois.readObject();
+            System.out.println(tuples);
+            this.tuplesList = tuples;
+
+            is.close();
+            ois.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private class EventHandler {

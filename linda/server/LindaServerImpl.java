@@ -11,7 +11,7 @@ import java.util.Collection;
 
 public class LindaServerImpl extends UnicastRemoteObject implements LindaServer {
 
-    private Linda linda;
+    private CentralizedLinda linda;
 
     protected LindaServerImpl() throws RemoteException {
         linda = new CentralizedLinda();
@@ -64,6 +64,11 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
                 }
             }
         });
+    }
+
+    @Override
+    public void save() {
+        linda.save();
     }
 
     @Override
