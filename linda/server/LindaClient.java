@@ -26,9 +26,21 @@ public class LindaClient implements Linda {
     /** Initializes the Linda implementation.
      *  @param serverURI the URI of the server, e.g. "rmi://localhost:4000/LindaServer" or "//localhost:4000/LindaServer".
      */
-    public LindaClient(String serverURI) throws RemoteException, NotBoundException, URISyntaxException, MalformedURLException {
-        URI uri = new URI(serverURI);
-        this.server = (LindaServer) Naming.lookup(serverURI);
+    public LindaClient(String serverURI) {
+        try {
+            URI uri = new URI(serverURI);
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+        try {
+            this.server = (LindaServer) Naming.lookup(serverURI);
+        } catch (NotBoundException e) {
+            throw new RuntimeException(e);
+        } catch (MalformedURLException e) {
+            throw new RuntimeException(e);
+        } catch (RemoteException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -36,7 +48,7 @@ public class LindaClient implements Linda {
         try {
             this.server.write(t);
         } catch (RemoteException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
     }
 

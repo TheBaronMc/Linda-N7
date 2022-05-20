@@ -3,10 +3,7 @@ package linda.server;
 import linda.whiteboard.WhiteboardModel;
 import linda.whiteboard.WhiteboardView;
 
-import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.rmi.AlreadyBoundException;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.*;
 
@@ -42,20 +39,10 @@ public class StartServer {
             @Override
             public void run() {
                 LindaServer lindaServer = null;
-                try {
-                    WhiteboardModel model = new WhiteboardModel();
-                    WhiteboardView view = new WhiteboardView(model);
-                    model.setView(view);
-                    model.start(new LindaClient("//localhost:4000/LindaServer"));
-                } catch (RemoteException e) {
-                    throw new RuntimeException(e);
-                } catch (MalformedURLException e) {
-                    throw new RuntimeException(e);
-                } catch (NotBoundException e) {
-                    throw new RuntimeException(e);
-                } catch (URISyntaxException e) {
-                    throw new RuntimeException(e);
-                }
+                WhiteboardModel model = new WhiteboardModel();
+                WhiteboardView view = new WhiteboardView(model);
+                model.setView(view);
+                model.start(new LindaClient("//localhost:4000/LindaServer"));
             }
         };
 
@@ -63,20 +50,10 @@ public class StartServer {
             @Override
             public void run() {
                 LindaServer lindaServer = null;
-                try {
-                    WhiteboardModel model = new WhiteboardModel();
-                    WhiteboardView view = new WhiteboardView(model);
-                    model.setView(view);
-                    model.start(new LindaClient("//localhost:4000/LindaServer"));
-                } catch (RemoteException e) {
-                    throw new RuntimeException(e);
-                } catch (MalformedURLException e) {
-                    throw new RuntimeException(e);
-                } catch (NotBoundException e) {
-                    throw new RuntimeException(e);
-                } catch (URISyntaxException e) {
-                    throw new RuntimeException(e);
-                }
+                WhiteboardModel model = new WhiteboardModel();
+                WhiteboardView view = new WhiteboardView(model);
+                model.setView(view);
+                model.start(new LindaClient("//localhost:4000/LindaServer"));
             }
         };
 
