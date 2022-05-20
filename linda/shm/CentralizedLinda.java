@@ -35,34 +35,59 @@ public class CentralizedLinda implements Linda {
     public void write(Tuple t) {
         this.mutex.lock();
 
+        this.debug("Write : Iteration sur les read callbacks");
         // Read Callbacks
+        ArrayList<EventHandler> readEventsToCall = new ArrayList<>();
         Iterator<EventHandler> iterReadEvents = this.readEvents.iterator();
         while (iterReadEvents.hasNext()) {
             EventHandler event = iterReadEvents.next();
             if (event.worksWith(t)) {
-                event.callWith(t.deepclone());
+                this.debug("Write : read - match avec un callback");
+                readEventsToCall.add(event);
+                this.debug("Write : read - suppresion de la liste des callbacks");
                 iterReadEvents.remove();
             }
         }
 
+        if (readEventsToCall.size() != 0)
+            this.debug("Write : read - Appel des martching callbacks");
+        for (EventHandler event : readEventsToCall) {
+            this.mutex.unlock();
+            event.callWith(t.deepclone());
+            this.mutex.lock();
+        }
+
+        this.debug("Write: réveille des reads en attente");
         this.readCondition.signalAll();
 
         // Take Callbacks
+        this.debug("Write : Iteration sur les take callbacks");
+        EventHandler takeEventToCall = null;
+        Boolean eventMatch = false;
         Iterator<EventHandler> iterTakeEvents = this.takeEvents.iterator();
-        while (iterTakeEvents.hasNext()) {
+        while (iterTakeEvents.hasNext() && !eventMatch) {
             EventHandler event = iterTakeEvents.next();
             if (event.worksWith(t)) {
-                event.callWith(t);
+                this.debug("Write : take - match avec un callback");
+                takeEventToCall = event;
                 iterTakeEvents.remove();
-                this.mutex.unlock();
-                return;
+                eventMatch = true;
             }
         }
 
+        if (takeEventToCall != null) {
+            this.mutex.unlock();
+            takeEventToCall.callWith(t);
+            return;
+        }
+
+        this.debug("Ajout du tuple à la liste");
         this.tuplesList.add(t);
 
+        this.debug("Reveille des take");
         this.takeCondition.signalAll();
 
+        this.debug("libération du lock");
         this.mutex.unlock();
     }
 
@@ -72,16 +97,21 @@ public class CentralizedLinda implements Linda {
 
         while (!existTuple(template)) {
             try {
+                this.debug("Take : Aucun match");
+                this.debug("Take : libération du lock");
                 this.mutex.unlock();
                 this.takeCondition.await();
                 this.mutex.lock();
+                this.debug("Take : récupération du lock");
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
 
+        this.debug("Take : match et récupération sur tuple");
         Tuple tuple = this.getTuple(template);
 
+        this.debug("Take : libération du lock");
         this.mutex.unlock();
 
         return tuple;
@@ -93,16 +123,21 @@ public class CentralizedLinda implements Linda {
 
         while (!this.existTuple(template)) {
             try {
+                this.debug("Read : Aucun match");
+                this.debug("Read : Libération du lock");
                 this.mutex.unlock();
                 this.readCondition.await();
                 this.mutex.lock();
+                this.debug("Read : Récupération du lock");
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
         }
 
+        this.debug("Read : Un tuple match");
         Tuple tuple = this.copyTuple(template);
 
+        this.debug("Read : Libération du lock");
         this.mutex.unlock();
 
         return tuple;
@@ -187,15 +222,7 @@ public class CentralizedLinda implements Linda {
 
     @Override
     public void debug(String prefix) {
-        System.out.println("================ DEBUG ================");
-
-        System.out.println("------------- TUPLESPACE --------------");
-
-        for (Tuple tuple : this.tuplesList)
-            System.out.println(tuple);
-
-
-        System.out.println("================= END =================");
+        System.out.println(prefix);
     }
 
     private boolean existTuple(Tuple template) {
@@ -208,13 +235,20 @@ public class CentralizedLinda implements Linda {
     }
 
     private Tuple getTuple(Tuple template) {
-        for (Tuple tuple : this.tuplesList) {
-            if (tuple.matches(template)) {
-                this.tuplesList.remove(tuple);
-                return tuple;
+        Tuple tuple = null;
+
+        for (Tuple t : this.tuplesList) {
+            if (t.matches(template)) {
+                tuple = t;
+                break;
             }
         }
-        return null;
+
+        if (tuple != null) {
+            this.tuplesList.remove(tuple);
+        }
+
+        return tuple;
     }
 
     private Tuple copyTuple(Tuple template) {
