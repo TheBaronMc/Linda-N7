@@ -9,12 +9,11 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.Collection;
 
-public class LindaServerImpl extends UnicastRemoteObject implements LindaServer {
+public abstract class AbstractLindaServer extends UnicastRemoteObject implements LindaServer {
 
-    private CentralizedLinda linda;
+    protected CentralizedLinda linda;
 
-    protected LindaServerImpl() throws RemoteException {
-        linda = new CentralizedLinda();
+    protected AbstractLindaServer() throws RemoteException {
     }
 
     @Override
@@ -74,5 +73,10 @@ public class LindaServerImpl extends UnicastRemoteObject implements LindaServer 
     @Override
     public void debug(String prefix) throws RemoteException {
 
+    }
+
+    @Override
+    public CentralizedLinda getState() throws RemoteException {
+        return linda;
     }
 }

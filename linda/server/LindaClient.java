@@ -22,24 +22,26 @@ import java.util.Collection;
 public class LindaClient implements Linda {
 
     private LindaServer server;
+
+    private String backupServerUri;
+    private boolean connectedToBackup;
 	
     /** Initializes the Linda implementation.
      *  @param serverURI the URI of the server, e.g. "rmi://localhost:4000/LindaServer" or "//localhost:4000/LindaServer".
      */
-    public LindaClient(String serverURI) {
+    public LindaClient(String primaryServerURI, String backupServerUri) {
+        connectedToBackup = false;
+
         try {
-            URI uri = new URI(serverURI);
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
-        try {
-            this.server = (LindaServer) Naming.lookup(serverURI);
-        } catch (NotBoundException e) {
-            throw new RuntimeException(e);
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        } catch (RemoteException e) {
-            throw new RuntimeException(e);
+            connectTo(primaryServerURI);
+        } catch (Exception e) {
+            try {
+                e.printStackTrace();
+                connectTo(backupServerUri);
+                connectedToBackup = true;
+            } catch (Exception e2) {
+                throw new RuntimeException(e2);
+            }
         }
     }
 
@@ -48,7 +50,20 @@ public class LindaClient implements Linda {
         try {
             this.server.write(t);
         } catch (RemoteException e) {
-            e.printStackTrace();
+            try {
+                if (!connectedToBackup) {
+                    e.printStackTrace();
+                    connectTo(backupServerUri);
+                    connectedToBackup = true;
+
+                    this.server.write(t);
+                } else {
+                    throw new RuntimeException(e);
+                }
+
+            } catch (Exception e2) {
+                throw new RuntimeException(e2);
+            }
         }
     }
 
@@ -57,7 +72,20 @@ public class LindaClient implements Linda {
         try {
             return this.server.take(template);
         } catch (RemoteException e) {
-            throw new RuntimeException(e);
+            try {
+                if (!connectedToBackup) {
+                    e.printStackTrace();
+                    connectTo(backupServerUri);
+                    connectedToBackup = true;
+
+                    return this.server.take(template);
+                } else {
+                    throw new RuntimeException(e);
+                }
+
+            } catch (Exception e2) {
+                throw new RuntimeException(e2);
+            }
         }
     }
 
@@ -66,7 +94,20 @@ public class LindaClient implements Linda {
         try {
             return this.server.read(template);
         } catch (RemoteException e) {
-            throw new RuntimeException(e);
+            try {
+                if (!connectedToBackup) {
+                    e.printStackTrace();
+                    connectTo(backupServerUri);
+                    connectedToBackup = true;
+
+                    return this.server.read(template);
+                } else {
+                    throw new RuntimeException(e);
+                }
+
+            } catch (Exception e2) {
+                throw new RuntimeException(e2);
+            }
         }
     }
 
@@ -75,7 +116,20 @@ public class LindaClient implements Linda {
         try {
             return this.server.tryTake(template);
         } catch (RemoteException e) {
-            throw new RuntimeException(e);
+            try {
+                if (!connectedToBackup) {
+                    e.printStackTrace();
+                    connectTo(backupServerUri);
+                    connectedToBackup = true;
+
+                    return this.server.tryTake(template);
+                } else {
+                    throw new RuntimeException(e);
+                }
+
+            } catch (Exception e2) {
+                throw new RuntimeException(e2);
+            }
         }
     }
 
@@ -84,7 +138,20 @@ public class LindaClient implements Linda {
         try {
             return this.server.tryRead(template);
         } catch (RemoteException e) {
-            throw new RuntimeException(e);
+            try {
+                if (!connectedToBackup) {
+                    e.printStackTrace();
+                    connectTo(backupServerUri);
+                    connectedToBackup = true;
+
+                    return this.server.tryRead(template);
+                } else {
+                    throw new RuntimeException(e);
+                }
+
+            } catch (Exception e2) {
+                throw new RuntimeException(e2);
+            }
         }
     }
 
@@ -93,7 +160,20 @@ public class LindaClient implements Linda {
         try {
             return this.server.takeAll(template);
         } catch (RemoteException e) {
-            throw new RuntimeException(e);
+            try {
+                if (!connectedToBackup) {
+                    e.printStackTrace();
+                    connectTo(backupServerUri);
+                    connectedToBackup = true;
+
+                    return this.server.takeAll(template);
+                } else {
+                    throw new RuntimeException(e);
+                }
+
+            } catch (Exception e2) {
+                throw new RuntimeException(e2);
+            }
         }
     }
 
@@ -102,7 +182,20 @@ public class LindaClient implements Linda {
         try {
             return this.server.readAll(template);
         } catch (RemoteException e) {
-            throw new RuntimeException(e);
+            try {
+                if (!connectedToBackup) {
+                    e.printStackTrace();
+                    connectTo(backupServerUri);
+                    connectedToBackup = true;
+
+                    return this.server.readAll(template);
+                } else {
+                    throw new RuntimeException(e);
+                }
+
+            } catch (Exception e2) {
+                throw new RuntimeException(e2);
+            }
         }
     }
 
@@ -112,7 +205,21 @@ public class LindaClient implements Linda {
             RemoteCallback remoteCallback = new RemoteCallbackImpl(callback);
             this.server.eventRegister(mode, timing, template, remoteCallback);
         } catch (RemoteException e) {
-            throw new RuntimeException(e);
+            try {
+                if (!connectedToBackup) {
+                    e.printStackTrace();
+                    connectTo(backupServerUri);
+                    connectedToBackup = true;
+
+                    RemoteCallback remoteCallback = new RemoteCallbackImpl(callback);
+                    this.server.eventRegister(mode, timing, template, remoteCallback);
+                } else {
+                    throw new RuntimeException(e);
+                }
+
+            } catch (Exception e2) {
+                throw new RuntimeException(e2);
+            }
         }
     }
 
@@ -121,8 +228,25 @@ public class LindaClient implements Linda {
         try {
             this.server.debug(prefix);
         } catch (RemoteException e) {
-            throw new RuntimeException(e);
+            try {
+                if (!connectedToBackup) {
+                    e.printStackTrace();
+                    connectTo(backupServerUri);
+                    connectedToBackup = true;
+
+                    this.server.debug(prefix);
+                } else {
+                    throw new RuntimeException(e);
+                }
+
+            } catch (Exception e2) {
+                throw new RuntimeException(e2);
+            }
         }
+    }
+
+    private void connectTo(String serverUri) throws MalformedURLException, NotBoundException, RemoteException {
+        this.server = (LindaServer) Naming.lookup(serverUri);
     }
 
 }

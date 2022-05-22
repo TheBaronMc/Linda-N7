@@ -4,6 +4,7 @@ import linda.AsynchronousCallback;
 import linda.Callback;
 import linda.Linda;
 import linda.Tuple;
+import linda.shm.CentralizedLinda;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -30,4 +31,6 @@ public interface LindaServer extends Remote {
     void eventRegister(Linda.eventMode mode, Linda.eventTiming timing, Tuple template, RemoteCallback callback) throws RemoteException;
 
     void debug(String prefix) throws RemoteException;
+
+    CentralizedLinda getState() throws RemoteException;
 }
