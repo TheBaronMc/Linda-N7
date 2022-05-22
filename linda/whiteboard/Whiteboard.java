@@ -21,7 +21,7 @@ public class Whiteboard {
         WhiteboardModel model = new WhiteboardModel();
         WhiteboardView view = new WhiteboardView(model);
         model.setView(view);
-        model.start(new linda.server.LindaClient(args[0]));
+        model.start(new linda.server.LindaClient(args[0], args[1]));
     }
 }
 
