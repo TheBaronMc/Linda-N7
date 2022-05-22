@@ -12,7 +12,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.locks.Condition;
 
 /** Shared memory implementation of Linda. */
-public class CentralizedLinda implements Linda {
+public class CentralizedLinda implements Linda, Serializable {
 
     public static final String SAVE_FILE_PATH = "linda_save";
 
@@ -104,9 +104,9 @@ public class CentralizedLinda implements Linda {
             try {
                 this.debug("Take : Aucun match");
                 this.debug("Take : libération du lock");
-                this.mutex.unlock();
+
                 this.takeCondition.await();
-                this.mutex.lock();
+
                 this.debug("Take : récupération du lock");
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
@@ -130,9 +130,9 @@ public class CentralizedLinda implements Linda {
             try {
                 this.debug("Read : Aucun match");
                 this.debug("Read : Libération du lock");
-                this.mutex.unlock();
+
                 this.readCondition.await();
-                this.mutex.lock();
+
                 this.debug("Read : Récupération du lock");
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
