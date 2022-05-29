@@ -1,44 +1,35 @@
 package linda.test;
 
+import linda.server.BackupLindaServer;
 import linda.server.LindaServer;
-import linda.server.PrimaryLindaServer;
 
 import java.rmi.AlreadyBoundException;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 
-public class LindaServerThread extends Thread {
+public class LindaBackupServerThread extends Thread {
 
     private int port;
+    private String primaryServerUri;
 
-    public LindaServerThread(int port) {
+    public LindaBackupServerThread(int port, String primaryServerUri) {
         this.port = port;
-    }
-
-    public static void setTimeout(Runnable runnable, int delay){
-        new Thread(() -> {
-            try {
-                Thread.sleep(delay);
-                runnable.run();
-            } catch (Exception e){
-                System.err.println(e);
-            }
-        }).start();
+        this.primaryServerUri = primaryServerUri;
     }
 
     @Override
     public void run() {
         LindaServer lindaServer = null;
         try {
-            lindaServer = new PrimaryLindaServer();
+            lindaServer = new BackupLindaServer(primaryServerUri);
 
-            System.out.println("=== Démarrage du serveur ===");
+            System.out.println("=== Démarrage du serveur secondaire ===");
             Registry dns = LocateRegistry.createRegistry(port);
 
             dns.bind("LindaServer", lindaServer);
+
+            LindaServer finalLindaServer = lindaServer;
 
             System.out.println("### LindaServer : Binded");
         } catch (RemoteException e) {
@@ -47,6 +38,4 @@ public class LindaServerThread extends Thread {
             throw new RuntimeException(e);
         }
     }
-
-
 }

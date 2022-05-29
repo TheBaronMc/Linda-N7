@@ -40,6 +40,9 @@ public class CentralizedLinda implements Linda, Serializable {
     public void write(Tuple t) {
         this.mutex.lock();
 
+        this.debug("Ajout du tuple à la liste");
+        this.tuplesList.add(t);
+
         this.debug("Write : Iteration sur les read callbacks");
         // Read Callbacks
         ArrayList<EventHandler> readEventsToCall = new ArrayList<>();
@@ -81,13 +84,11 @@ public class CentralizedLinda implements Linda, Serializable {
         }
 
         if (takeEventToCall != null) {
+            this.tuplesList.remove(t);
             this.mutex.unlock();
             takeEventToCall.callWith(t);
             return;
         }
-
-        this.debug("Ajout du tuple à la liste");
-        this.tuplesList.add(t);
 
         this.debug("Reveille des take");
         this.takeCondition.signalAll();

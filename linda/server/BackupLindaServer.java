@@ -2,9 +2,7 @@ package linda.server;
 
 import linda.shm.CentralizedLinda;
 
-import java.net.MalformedURLException;
 import java.rmi.Naming;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 
 public class BackupLindaServer extends AbstractLindaServer {
@@ -19,6 +17,7 @@ public class BackupLindaServer extends AbstractLindaServer {
 
             while (true) {
                 linda = primaryServer.getState();
+                System.out.println("Backup - Waiting");
                 Thread.sleep(5000);
             }
         } catch (InterruptedException e) {
@@ -27,6 +26,7 @@ public class BackupLindaServer extends AbstractLindaServer {
             if (linda == null) {
                 linda = new CentralizedLinda();
             }
+            System.out.println("Backup - take the relay");
         }
 
     }

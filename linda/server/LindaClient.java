@@ -27,10 +27,12 @@ public class LindaClient implements Linda {
     private boolean connectedToBackup;
 	
     /** Initializes the Linda implementation.
-     *  @param serverURI the URI of the server, e.g. "rmi://localhost:4000/LindaServer" or "//localhost:4000/LindaServer".
+     *  @param primaryServerURI URI of the server, e.g. "rmi://localhost:4000/LindaServer" or "//localhost:4000/LindaServer".
+     *  @param backupServerUri URI of the backup server, e.g. "rmi://localhost:4000/LindaServer" or "//localhost:4000/LindaServer".
      */
     public LindaClient(String primaryServerURI, String backupServerUri) {
         connectedToBackup = false;
+        this.backupServerUri = backupServerUri;
 
         try {
             connectTo(primaryServerURI);
@@ -49,7 +51,7 @@ public class LindaClient implements Linda {
     public void write(Tuple t) {
         try {
             this.server.write(t);
-        } catch (RemoteException e) {
+        } catch (Exception e) {
             try {
                 if (!connectedToBackup) {
                     e.printStackTrace();
@@ -71,7 +73,7 @@ public class LindaClient implements Linda {
     public Tuple take(Tuple template) {
         try {
             return this.server.take(template);
-        } catch (RemoteException e) {
+        } catch (Exception e) {
             try {
                 if (!connectedToBackup) {
                     e.printStackTrace();
@@ -93,7 +95,7 @@ public class LindaClient implements Linda {
     public Tuple read(Tuple template) {
         try {
             return this.server.read(template);
-        } catch (RemoteException e) {
+        } catch (Exception e) {
             try {
                 if (!connectedToBackup) {
                     e.printStackTrace();
@@ -115,7 +117,7 @@ public class LindaClient implements Linda {
     public Tuple tryTake(Tuple template) {
         try {
             return this.server.tryTake(template);
-        } catch (RemoteException e) {
+        } catch (Exception e) {
             try {
                 if (!connectedToBackup) {
                     e.printStackTrace();
@@ -137,7 +139,7 @@ public class LindaClient implements Linda {
     public Tuple tryRead(Tuple template) {
         try {
             return this.server.tryRead(template);
-        } catch (RemoteException e) {
+        } catch (Exception e) {
             try {
                 if (!connectedToBackup) {
                     e.printStackTrace();
@@ -159,7 +161,7 @@ public class LindaClient implements Linda {
     public Collection<Tuple> takeAll(Tuple template) {
         try {
             return this.server.takeAll(template);
-        } catch (RemoteException e) {
+        } catch (Exception e) {
             try {
                 if (!connectedToBackup) {
                     e.printStackTrace();
@@ -181,7 +183,7 @@ public class LindaClient implements Linda {
     public Collection<Tuple> readAll(Tuple template) {
         try {
             return this.server.readAll(template);
-        } catch (RemoteException e) {
+        } catch (Exception e) {
             try {
                 if (!connectedToBackup) {
                     e.printStackTrace();
@@ -204,7 +206,7 @@ public class LindaClient implements Linda {
         try {
             RemoteCallback remoteCallback = new RemoteCallbackImpl(callback);
             this.server.eventRegister(mode, timing, template, remoteCallback);
-        } catch (RemoteException e) {
+        } catch (Exception e) {
             try {
                 if (!connectedToBackup) {
                     e.printStackTrace();
@@ -227,7 +229,7 @@ public class LindaClient implements Linda {
     public void debug(String prefix) {
         try {
             this.server.debug(prefix);
-        } catch (RemoteException e) {
+        } catch (Exception e) {
             try {
                 if (!connectedToBackup) {
                     e.printStackTrace();
@@ -246,6 +248,7 @@ public class LindaClient implements Linda {
     }
 
     private void connectTo(String serverUri) throws MalformedURLException, NotBoundException, RemoteException {
+        System.out.println("# Connection to : " + serverUri);
         this.server = (LindaServer) Naming.lookup(serverUri);
     }
 
